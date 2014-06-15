@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 0.12.0-SNAPSHOT - 2014-06-13
+ * Version: 0.12.0-SNAPSHOT - 2014-06-16
  * License: MIT
  */
 angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.transition","ui.bootstrap.collapse","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.bindHtml","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.position","ui.bootstrap.datepicker","ui.bootstrap.dropdown","ui.bootstrap.modal","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
@@ -1008,6 +1008,19 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     self[key] = angular.isDefined($attrs[key]) ? (index < 8 ? $interpolate($attrs[key])($scope.$parent) : $scope.$parent.$eval($attrs[key])) : datepickerConfig[key];
   });
 
+  // Watchable attributes
+  angular.forEach(['watchableMinMode'], function( key ) {
+    //Removes "watchable" from key
+    var unwatchedAttributeName = key.charAt(9).toLowerCase() + key.slice(10);
+
+    if ( $attrs[key] ) {
+      $scope.$parent.$watch($parse($attrs[key]), function(value) {
+        self[unwatchedAttributeName] = value;
+        self.refreshView();
+      });
+    }
+  });
+
   // Watchable date attributes
   angular.forEach(['minDate', 'maxDate'], function( key ) {
     if ( $attrs[key] ) {
@@ -1455,7 +1468,18 @@ function ($compile, $parse, $document, $position, dateFilter, dateParser, datepi
         });
       }
 
+      //Watch attributes 
       scope.watchData = {};
+      angular.forEach(['minMode'], function( key ) {
+        if ( attrs[key] ) {
+          var getAttribute = $parse(attrs[key]);
+          scope.$parent.$watch(getAttribute, function(value){
+            scope.watchData[key] = value;
+          });
+          datepickerEl.attr('watchable-' + cameltoDash(key), 'watchData.' + key);
+        }
+      });
+
       angular.forEach(['minDate', 'maxDate', 'datepickerMode'], function( key ) {
         if ( attrs[key] ) {
           var getAttribute = $parse(attrs[key]);
